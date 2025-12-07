@@ -3,7 +3,7 @@
 """
 SQLAlchemy models for Mnemosyne database
 """
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, JSON, ForeignKey, LargeBinary
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, JSON, ForeignKey, LargeBinary, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, Session
 from sqlalchemy.dialects.sqlite import BLOB
@@ -216,6 +216,18 @@ class ProcessingQueue(Base):
     
     def __repr__(self):
         return f"<ProcessingQueue(id={self.id}, file_id={self.file_id}, task={self.task_type})>"
+    
+class IngestionLog(Base):
+    __tablename__ = "ingestion_logs"
+
+    id = Column(Integer, primary_key=True)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    finished_at = Column(DateTime)
+    ingested = Column(Integer, default=0)
+    duplicates = Column(Integer, default=0)
+    errors = Column(Integer, default=0)
+    total_size = Column(BigInteger, default=0)
+    details = Column(JSON, nullable=True)  # batch/file breakdown
 
 
 # Create tables
