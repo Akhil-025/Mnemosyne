@@ -1,0 +1,33 @@
+system:
+  platform: "windows"
+  data_dir: "C:/Users/pilla/AppData/Local/Mnemosyne"
+  temp_dir: "C:/Temp/Mnemosyne"
+
+paths:
+  source: "C:/Users/pilla/Pictures"
+  output: "C:/Users/pilla/OrganizedPhotos"
+  vault: "C:/Users/pilla/AppData/Local/Mnemosyne/vault"
+  cache: "C:/Users/pilla/AppData/Local/Mnemosyne/cache"
+
+ollama:
+  base_url: "http://localhost:11434"
+  timeout: 300
+  image_model: "llava:13b"
+  embedding_model: "nomic-embed-text:latest"
+  text_model: "llama3:latest"
+
+database:
+  # Use SQLite with ChromaDB for vectors (better Windows support)
+  url: "sqlite:///C:/Users/pilla/AppData/Local/Mnemosyne/mnemosyne.db"
+  vector_store: "chromadb"  # sqlite-vss doesn't work well on Windows
+
+processing:
+  max_workers: 4
+  batch_size: 50
+  use_gpu: false  # Set to true if you have NVIDIA GPU with CUDA
+  use_hardlinks: false  # Windows hardlinks have limitations
+  
+watchdog:
+  debounce_time: 2.0  # Seconds
+  recursive: true
+  ignore_patterns: [".DS_Store", "Thumbs.db", "desktop.ini"]

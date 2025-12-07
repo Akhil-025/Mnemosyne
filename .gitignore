@@ -1,0 +1,108 @@
+# =========================
+# Python / Environment
+# =========================
+__pycache__/
+*.py[cod]
+.Python
+.env
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# OS Files
+# =========================
+Thumbs.db
+desktop.ini
+.DS_Store
+*.lnk
+$RECYCLE.BIN/
+
+# =========================
+# Data / Runtime
+# =========================
+data/
+!data/.gitkeep
+cache/
+app/cache/
+temp/
+tmp/
+output/
+
+# =========================
+# User Data / Media
+# =========================
+vault/
+organized/
+organized_photos/
+OrganizedPhotos/
+media/
+uploads/
+
+# =========================
+# Models / AI
+# =========================
+models/
+insightface/
+**/*.onnx
+**/*.bin
+**/buffalo_l/
+
+onnxruntime_cache/
+onnxruntime_providers/
+
+# =========================
+# Vector DB / Embeddings
+# =========================
+chroma/
+chromadb/
+*.parquet
+*.npy
+
+# =========================
+# Build / Packaging
+# =========================
+dist/
+build/
+*.spec
+*.egg-info/
+*.egg
+*.tar.gz
+
+# =========================
+# Tests
+# =========================
+coverage/
+htmlcov/
+.tox/
+.mypy_cache/
+
+# =========================
+# Secrets
+# =========================
+secrets.json
+*.key
+*.pem
+*.crt
+
+# =========================
+# Node (future UI)
+# =========================
+node_modules/
+.next/
+npm-debug.log*
+*.map
