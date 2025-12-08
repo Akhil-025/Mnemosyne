@@ -64,3 +64,12 @@ winshell==0.6
 ##############################
 # torch==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
 # torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+huggingface_hub >= 0.24+
+
+transformers >= 4.45
+
+accelerate >= 1.x
+
+timm
+
+pillow-heif

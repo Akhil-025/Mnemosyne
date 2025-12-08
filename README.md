@@ -12,6 +12,7 @@ Mnemosyne/
 │   │   ├── ollama_client.py      # Ollama API wrapper
 │   │   ├── face_analysis.py      # InsightFace face analysis
 │   │   ├── video_processor.py    # Video frame extraction
+│   │   ├── local_vision.py
 │   │   └── intelligence_engine.py # Main AI orchestration
 │   │
 │   ├── db/                # Data layer
@@ -28,6 +29,7 @@ Mnemosyne/
 │   │   ├── burst_culling.py # Smart burst selection
 │   │   ├── metadata_writer.py # EXIF/IPTC write-back
 │   │   ├── privacy_vault.py # Sensitive content detection
+│   │   ├── analysis_worker.py
 │   │   └── workflow.py    # Task scheduler and orchestration
 │   │
 │   ├── web/               # Interaction layer
@@ -50,7 +52,13 @@ Mnemosyne/
 │   │   ├── file_utils.py     # File operations & hashing
 │   │   ├── geocoding.py      # Reverse geocoding
 │   │   ├── windows_compat.py # Windows compatibility
-│   │   └── image_utils.py    # Image processing
+│   │   └── image_utils.py    # Image processing 
+│   │
+│   ├── maintenance
+│   │   └── analysis_tools.py
+│   │
+│   ├── tools
+│   │   └── view_last_analysis.py
 │   │
 │   └── watchdog/          # File monitoring
 │       ├── __init__.py
@@ -67,4 +75,36 @@ Mnemosyne/
 ├── Dockerfile
 ├── requirements.txt
 ├── start_mnemosyne.bat
-├── config.yaml
+└──config.yaml
+
+### To see Data
+sqlite3 data/mnemosyne.db
+
+.tables
+
+⭐ Use this query:
+SELECT 
+    file_id,
+    caption,
+    tags,
+    objects,
+    aesthetic_score,
+    sharpness,
+    color_palette,
+    ocr_text
+FROM analysis_results
+LIMIT 20;
+
+⭐ Or join with filenames:
+SELECT 
+    f.id,
+    f.original_path,
+    a.caption,
+    a.tags,
+    a.objects,
+    a.color_palette,
+    a.sharpness
+FROM files f
+JOIN analysis_results a ON f.id = a.file_id
+LIMIT 20;
+This will show image → analysis.

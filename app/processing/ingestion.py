@@ -301,45 +301,14 @@ class FileIngestor:
         """Find all media files in directory"""
         media_extensions = {
             # Images
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".tiff",
-            ".tif",
-            ".webp",
-            ".heic",
-            ".heif",
-            ".raw",
-            ".nef",
-            ".cr2",
-            ".arw",
-            ".dng",
-            ".orf",
-            ".sr2",
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif",
+            ".webp", ".heic", ".heif", ".raw", ".nef", ".cr2", ".arw",
+            ".dng", ".orf", ".sr2",
             # Videos
-            ".mp4",
-            ".mov",
-            ".avi",
-            ".mkv",
-            ".webm",
-            ".flv",
-            ".wmv",
-            ".m4v",
-            ".mpg",
-            ".mpeg",
-            ".3gp",
-            ".mts",
-            ".m2ts",
+            ".mp4", ".mov", ".avi", ".mkv", ".webm", ".flv", ".wmv",
+            ".m4v", ".mpg", ".mpeg", ".3gp", ".mts", ".m2ts",
             # Audio
-            ".mp3",
-            ".wav",
-            ".flac",
-            ".m4a",
-            ".aac",
-            ".ogg",
-            ".wma",
+            ".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".wma",
         }
 
         files: List[Path] = []
@@ -353,7 +322,7 @@ class FileIngestor:
                 files.extend(directory.glob(f"*{ext}"))
                 files.extend(directory.glob(f"*{ext.upper()}"))
 
-        # Filter out system/hidden files
+        # Filter out system/hidden + unreadable
         filtered_files: List[Path] = []
         for file_path in files:
             if file_path.name.startswith(".") or file_path.name.startswith("~"):
@@ -367,8 +336,22 @@ class FileIngestor:
             except (OSError, PermissionError):
                 logger.warning(f"Permission denied: {file_path}")
 
-        filtered_files.sort(key=lambda x: x.stat().st_mtime)
-        return filtered_files
+        # 🔑 DEDUPE by resolved absolute path, preserve first occurrence
+        seen: set[str] = set()
+        unique_files: List[Path] = []
+        for fp in filtered_files:
+            try:
+                key = str(fp.resolve())
+            except OSError:
+                key = str(fp)
+            if key not in seen:
+                seen.add(key)
+                unique_files.append(fp)
+
+        # Sort by modification time (oldest first)
+        unique_files.sort(key=lambda x: x.stat().st_mtime)
+        return unique_files
+
 
     # --------------------------------------------------------------
     # Batch processing + retry

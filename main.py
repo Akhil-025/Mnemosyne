@@ -18,6 +18,7 @@ from app.utils.config import Config
 from app.db.session import init_database
 from app.core.intelligence_engine import IntelligenceEngine
 from app.processing.ingestion import FileIngestor
+from app.processing.analysis_worker import AnalysisWorker
 from app.watchdog.monitor import FileMonitor
 
 # Configure logging
@@ -59,7 +60,7 @@ async def main():
         config.paths.vault,
         config.paths.cache,
         Path("./data/thumbnails"),
-        Path("./models")
+        Path("./models"),
     ]
     
     for directory in directories:
@@ -73,6 +74,7 @@ async def main():
     intelligence = IntelligenceEngine(config)
     ingestor = FileIngestor(config, db_manager)
     monitor = FileMonitor(config, ingestor)
+    worker = AnalysisWorker(config, db_manager, intelligence, poll_interval=2.0)
     
     # Start services
     print("\nStarting Mnemosyne services...")
@@ -81,25 +83,28 @@ async def main():
     print(f"Output: {config.paths.output}")
     print(f"Ollama: {config.ollama.base_url}")
     
+    worker_task = None
+
     try:
-        # FIRST: process existing files
+        # 1) Process existing files (fills files + processing_queue)
         print("\nProcessing existing files...")
         await ingestor.process_directory(config.paths.source)
 
-        # THEN: start watchdog
+        # 2) Start watchdog (for new files)
         await monitor.start()
-        
-        # Keep running
+
+        # 3) Start analysis worker in background
+        worker_task = asyncio.create_task(worker.start())
+
+        # 4) Keep running
         print("\nMnemosyne is running. Press Ctrl+C to stop.")
         while True:
             await asyncio.sleep(1)
             
     except asyncio.CancelledError:
-        # Suppresses the asyncio cancellation traceback
         pass
 
     except KeyboardInterrupt:
-        # Normal user interrupt
         print("\nShutting down...")
 
     except Exception as e:
@@ -108,10 +113,17 @@ async def main():
 
     finally:
         # CLEAN shutdown
+        if worker:
+            await worker.stop()
+        if worker_task:
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
+
         if monitor:
             await monitor.stop()
-
-
 
 if __name__ == "__main__":
     # Set Windows event loop policy

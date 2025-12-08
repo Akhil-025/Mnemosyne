@@ -37,6 +37,20 @@ class File(Base):
     embeddings = relationship("Embedding", back_populates="file", cascade="all, delete-orphan")
     faces = relationship("FaceDetection", back_populates="file", cascade="all, delete-orphan")
     events = relationship("Event", secondary="event_files", back_populates="files")
+
+    # Optional: basic analysis fields mirrored on File
+    caption = Column(Text, nullable=True)
+    ocr_text = Column(Text, nullable=True)
+    objects = Column(JSON, nullable=True)
+    tags = Column(JSON, nullable=True)
+    mood = Column(String, nullable=True)
+    is_sensitive = Column(Boolean, default=False)
+
+    blur_score = Column(Float, nullable=True)
+    color_palette = Column(JSON, nullable=True)
+
+    # new flag: enqueue for analysis if True (currently unused in your worker)
+    needs_analysis = Column(Boolean, default=True, index=True)
     
     def __repr__(self):
         return f"<File(id={self.id}, path={self.file_path}, type={self.file_type})>"

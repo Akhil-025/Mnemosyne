@@ -15,6 +15,17 @@ import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+from insightface.app import FaceAnalysis
+import onnxruntime as ort
+from PIL import Image, UnidentifiedImageError
+
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+    HAS_HEIF = True
+except ImportError:
+    HAS_HEIF = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -101,15 +112,12 @@ class FaceAnalyzer:
         # On Windows, non-ASCII or weird paths sometimes break imread
         if img is None:
             try:
-                data = np.frombuffer(image_path.read_bytes(), np.uint8)
-                img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+                rgb = load_image_any(image_path)
+                img = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
             except Exception as e:
                 logger.error(f"Failed to read image (fallback) from {image_path}: {e}")
                 return []
 
-        if img is None:
-            logger.error(f"Failed to read image: {image_path}")
-            return []
 
         # Run face detection
         faces = self.app.get(img)
@@ -235,6 +243,45 @@ class FaceAnalyzer:
         """Load embeddings from file"""
         with open(filepath, 'rb') as f:
             return pickle.load(f)
+        
+def load_image_any(path: str | Path) -> np.ndarray:
+    """
+    Robust loader for faces; returns RGB numpy array.
+    HEIC is decoded via pillow-heif if available.
+    """
+    path = Path(path)
+    ext = path.suffix.lower()
+
+    # 1) Try plain PIL
+    try:
+        img = Image.open(path)
+        img.load()
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        return np.array(img)
+    except (UnidentifiedImageError, OSError) as e:
+        logger.warning("Face loader: PIL failed for %s: %s", path, e)
+
+    # 2) HEIC via pillow-heif
+    if ext in {".heic", ".heif"} and HAS_HEIF:
+        try:
+            heif_file = pillow_heif.read_heif(str(path))
+            img = Image.frombytes(
+                heif_file.mode,
+                heif_file.size,
+                heif_file.data,
+                "raw",
+                heif_file.mode,
+                0,
+                1,
+            )
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            return np.array(img)
+        except Exception as e:
+            logger.error("Face loader: HEIC decode failed for %s: %s", path, e)
+
+    raise RuntimeError(f"Face loader: cannot read image {path}")
 
 
 class FaceDatabase:
